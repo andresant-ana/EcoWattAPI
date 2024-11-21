@@ -1,6 +1,6 @@
 ﻿using EcoWatt.API.Models;
 
-namespace EcoWatt.API.Repositories
+namespace EcoWatt.API.Interfaces.Repositories
 {
     public interface IRelatorioRepository
     {

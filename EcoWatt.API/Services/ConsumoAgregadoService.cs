@@ -1,4 +1,6 @@
 ﻿using EcoWatt.API.Data;
+using EcoWatt.API.Interfaces.Repositories;
+using EcoWatt.API.Interfaces.Services;
 using EcoWatt.API.Models;
 using EcoWatt.API.Repositories;
 using Microsoft.EntityFrameworkCore;

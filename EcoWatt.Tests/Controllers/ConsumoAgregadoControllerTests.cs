@@ -2,11 +2,13 @@
 using EcoWatt.API.DTOs;
 using EcoWatt.API.Models;
 using EcoWatt.API.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using EcoWatt.API.Interfaces.Services;
 
 namespace EcoWatt.Tests.Controllers
 {
@@ -39,6 +41,7 @@ namespace EcoWatt.Tests.Controllers
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
             var returnConsumos = Assert.IsAssignableFrom<IEnumerable<ConsumoAgregado>>(okResult.Value);
             Assert.Equal(2, ((List<ConsumoAgregado>)returnConsumos).Count);
+            _mockService.Verify(service => service.GetAllConsumosAsync(), Times.Once);
         }
 
         [Fact]
@@ -57,6 +60,7 @@ namespace EcoWatt.Tests.Controllers
             var returnConsumo = Assert.IsType<ConsumoAgregado>(okResult.Value);
             Assert.Equal(testId, returnConsumo.Id);
             Assert.Equal("Consumo Teste", returnConsumo.Descricao);
+            _mockService.Verify(service => service.GetConsumoByIdAsync(testId), Times.Once);
         }
 
         [Fact]
@@ -71,6 +75,7 @@ namespace EcoWatt.Tests.Controllers
 
             // Assert
             Assert.IsType<NotFoundResult>(result.Result);
+            _mockService.Verify(service => service.GetConsumoByIdAsync(testId), Times.Once);
         }
 
         [Fact]
@@ -82,37 +87,38 @@ namespace EcoWatt.Tests.Controllers
                 RelatorioId = 1,
                 DispositivoId = 2,
                 Consumo = 150.75,
-                DataConsumo = DateTime.Now,
+                DataConsumo = System.DateTime.UtcNow,
                 Descricao = "Novo Consumo"
             };
 
             var consumo = new ConsumoAgregado
             {
-                // Id será atribuído pelo mock
                 RelatorioId = consumoCreateDto.RelatorioId,
                 DispositivoId = consumoCreateDto.DispositivoId,
                 Consumo = consumoCreateDto.Consumo,
                 DataConsumo = consumoCreateDto.DataConsumo,
                 Descricao = consumoCreateDto.Descricao
+                // Id será atribuído pelo mock
             };
 
             _mockService.Setup(service => service.DispositivoExistsAsync(consumoCreateDto.DispositivoId))
                         .ReturnsAsync(true);
-
             _mockService.Setup(service => service.AddConsumoAsync(It.IsAny<ConsumoAgregado>()))
-                        .Callback<ConsumoAgregado>(ca => ca.Id = 1) // Atribui o Id
+                        .Callback<ConsumoAgregado>(ca => ca.Id = 1)
                         .Returns(Task.CompletedTask);
 
             // Act
             var result = await _controller.Create(consumoCreateDto);
 
             // Assert
-            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result);
+            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
             var returnConsumo = Assert.IsType<ConsumoAgregado>(createdAtActionResult.Value);
-            Assert.Equal(1, returnConsumo.Id); // Verifica se o Id é 1
+            Assert.Equal(1, returnConsumo.Id);
             Assert.Equal(consumo.Descricao, returnConsumo.Descricao);
             Assert.Equal(nameof(_controller.GetById), createdAtActionResult.ActionName);
             Assert.Equal(1, createdAtActionResult.RouteValues["id"]);
+            _mockService.Verify(service => service.DispositivoExistsAsync(consumoCreateDto.DispositivoId), Times.Once);
+            _mockService.Verify(service => service.AddConsumoAsync(It.IsAny<ConsumoAgregado>()), Times.Once);
         }
 
         [Fact]
@@ -123,13 +129,16 @@ namespace EcoWatt.Tests.Controllers
             {
                 // Propriedades ausentes para invalidar o ModelState
             };
-            _controller.ModelState.AddModelError("Nome", "Required");
+            _controller.ModelState.AddModelError("Descricao", "Required");
 
             // Act
             var result = await _controller.Create(consumoCreateDto);
 
             // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+            Assert.IsType<SerializableError>(badRequestResult.Value);
+            _mockService.Verify(service => service.DispositivoExistsAsync(It.IsAny<int?>()), Times.Never);
+            _mockService.Verify(service => service.AddConsumoAsync(It.IsAny<ConsumoAgregado>()), Times.Never);
         }
 
         [Fact]
@@ -141,7 +150,7 @@ namespace EcoWatt.Tests.Controllers
                 RelatorioId = 1,
                 DispositivoId = 2,
                 Consumo = 150.75,
-                DataConsumo = System.DateTime.Now,
+                DataConsumo = System.DateTime.UtcNow,
                 Descricao = "Novo Consumo"
             };
 
@@ -152,8 +161,10 @@ namespace EcoWatt.Tests.Controllers
             var result = await _controller.Create(consumoCreateDto);
 
             // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal($"Dispositivo com Id {consumoCreateDto.DispositivoId.Value} não encontrado.", badRequestResult.Value);
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+            Assert.Equal($"Dispositivo com Id {consumoCreateDto.DispositivoId} não encontrado.", badRequestResult.Value);
+            _mockService.Verify(service => service.DispositivoExistsAsync(consumoCreateDto.DispositivoId), Times.Once);
+            _mockService.Verify(service => service.AddConsumoAsync(It.IsAny<ConsumoAgregado>()), Times.Never);
         }
 
         [Fact]
@@ -167,11 +178,10 @@ namespace EcoWatt.Tests.Controllers
                 RelatorioId = 1,
                 DispositivoId = 2,
                 Consumo = 200.50,
-                DataConsumo = System.DateTime.Now,
+                DataConsumo = System.DateTime.UtcNow,
                 Descricao = "Consumo Atualizado"
             };
-
-            var consumo = new ConsumoAgregado
+            var consumoExistente = new ConsumoAgregado
             {
                 Id = testId,
                 RelatorioId = consumoUpdateDto.RelatorioId,
@@ -183,7 +193,9 @@ namespace EcoWatt.Tests.Controllers
 
             _mockService.Setup(service => service.DispositivoExistsAsync(consumoUpdateDto.DispositivoId))
                         .ReturnsAsync(true);
-            _mockService.Setup(service => service.UpdateConsumoAsync(consumo))
+            _mockService.Setup(service => service.GetConsumoByIdAsync(testId))
+                        .ReturnsAsync(consumoExistente);
+            _mockService.Setup(service => service.UpdateConsumoAsync(consumoExistente))
                         .Returns(Task.CompletedTask);
 
             // Act
@@ -191,6 +203,9 @@ namespace EcoWatt.Tests.Controllers
 
             // Assert
             Assert.IsType<NoContentResult>(result);
+            _mockService.Verify(service => service.DispositivoExistsAsync(consumoUpdateDto.DispositivoId), Times.Once);
+            _mockService.Verify(service => service.GetConsumoByIdAsync(testId), Times.Once);
+            _mockService.Verify(service => service.UpdateConsumoAsync(consumoExistente), Times.Once);
         }
 
         [Fact]
@@ -204,7 +219,7 @@ namespace EcoWatt.Tests.Controllers
                 RelatorioId = 1,
                 DispositivoId = 2,
                 Consumo = 200.50,
-                DataConsumo = System.DateTime.Now,
+                DataConsumo = System.DateTime.UtcNow,
                 Descricao = "Consumo Atualizado"
             };
 
@@ -212,7 +227,11 @@ namespace EcoWatt.Tests.Controllers
             var result = await _controller.Update(testId, consumoUpdateDto);
 
             // Assert
-            Assert.IsType<BadRequestResult>(result);
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal("ID na rota não corresponde ao ID no corpo da requisição.", badRequestResult.Value);
+            _mockService.Verify(service => service.DispositivoExistsAsync(It.IsAny<int?>()), Times.Never);
+            _mockService.Verify(service => service.GetConsumoByIdAsync(It.IsAny<int>()), Times.Never);
+            _mockService.Verify(service => service.UpdateConsumoAsync(It.IsAny<ConsumoAgregado>()), Times.Never);
         }
 
         [Fact]
@@ -226,7 +245,7 @@ namespace EcoWatt.Tests.Controllers
                 RelatorioId = 1,
                 DispositivoId = 2,
                 Consumo = 200.50,
-                DataConsumo = System.DateTime.Now,
+                DataConsumo = System.DateTime.UtcNow,
                 Descricao = "Consumo Atualizado"
             };
 
@@ -238,7 +257,10 @@ namespace EcoWatt.Tests.Controllers
 
             // Assert
             var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-            Assert.Equal($"Dispositivo com Id {consumoUpdateDto.DispositivoId.Value} não encontrado.", badRequestResult.Value);
+            Assert.Equal($"Dispositivo com Id {consumoUpdateDto.DispositivoId} não encontrado.", badRequestResult.Value);
+            _mockService.Verify(service => service.DispositivoExistsAsync(consumoUpdateDto.DispositivoId), Times.Once);
+            _mockService.Verify(service => service.GetConsumoByIdAsync(It.IsAny<int>()), Times.Never);
+            _mockService.Verify(service => service.UpdateConsumoAsync(It.IsAny<ConsumoAgregado>()), Times.Never);
         }
 
         [Fact]
@@ -255,6 +277,8 @@ namespace EcoWatt.Tests.Controllers
 
             // Assert
             Assert.IsType<NoContentResult>(result);
+            _mockService.Verify(service => service.GetConsumoByIdAsync(testId), Times.Once);
+            _mockService.Verify(service => service.DeleteConsumoAsync(testId), Times.Once);
         }
 
         [Fact]
@@ -269,6 +293,8 @@ namespace EcoWatt.Tests.Controllers
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
+            _mockService.Verify(service => service.GetConsumoByIdAsync(testId), Times.Once);
+            _mockService.Verify(service => service.DeleteConsumoAsync(It.IsAny<int>()), Times.Never);
         }
     }
 }

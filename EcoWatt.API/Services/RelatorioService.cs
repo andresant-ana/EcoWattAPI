@@ -1,7 +1,8 @@
 ﻿using EcoWatt.API.Models;
-using EcoWatt.API.Repositories;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using EcoWatt.API.Interfaces.Repositories;
+using EcoWatt.API.Interfaces.Services;
 
 namespace EcoWatt.API.Services
 {
