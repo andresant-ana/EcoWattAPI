@@ -13,7 +13,6 @@ A aplicação se conecta a um banco de dados Oracle para armazenamento de dados 
 - **Moq**: Mocking para testes unitários com xUnit.
 - **xUnit**: Framework de testes.
 - **Oracle**: Banco de dados principal.
-- **MongoDB**: Armazenamento de backups e análise de grandes volumes de dados.
 - **Azure**: Integração com CI/CD para deploy contínuo.
 
 
