@@ -25,7 +25,7 @@ A aplicação se conecta a um banco de dados Oracle para armazenamento de dados 
 - **Integração com Dispositivos:**
   - Verificação da existência de dispositivos antes de associar consumos.
 - **Documentação da API:**
-  - Uso de `[ProducesResponseType]` para documentação clara dos endpoints.
+  - Uso de Swagger para documentação clara dos endpoints.
 - **Testes Unitários:**
   - Implementação de testes com **Moq** e **xUnit** para garantir a qualidade do código.
 - **Caching de Configurações:**
