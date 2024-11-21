@@ -5,7 +5,7 @@ VisualStudioVersion = 17.11.35222.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcoWatt.API", "EcoWatt.API\EcoWatt.API.csproj", "{13744322-F7FA-4B14-A844-9F5F73E64A24}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcoWatt.Tests", "EcoWatt.Tests\EcoWatt.Tests.csproj", "{40143C40-A564-457A-AFDD-75A480C3E318}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EcoWatt.Tests", "EcoWatt.Tests\EcoWatt.Tests.csproj", "{00A9290C-0502-4A2F-A62A-A3489694B951}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{13744322-F7FA-4B14-A844-9F5F73E64A24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13744322-F7FA-4B14-A844-9F5F73E64A24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13744322-F7FA-4B14-A844-9F5F73E64A24}.Release|Any CPU.Build.0 = Release|Any CPU
-		{40143C40-A564-457A-AFDD-75A480C3E318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{40143C40-A564-457A-AFDD-75A480C3E318}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{40143C40-A564-457A-AFDD-75A480C3E318}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{40143C40-A564-457A-AFDD-75A480C3E318}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00A9290C-0502-4A2F-A62A-A3489694B951}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00A9290C-0502-4A2F-A62A-A3489694B951}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00A9290C-0502-4A2F-A62A-A3489694B951}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00A9290C-0502-4A2F-A62A-A3489694B951}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
